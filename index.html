@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual">
+<title>Private Community Admin</title>
+<meta name="color-scheme" content="dark light">
+<script>
+/* Apply saved theme before first paint (no flash) */
+(function(){
+  var pref = 'system';
+  try { pref = localStorage.getItem('pc-theme') || 'system'; } catch(e){}
+  var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-pref', pref);
+  ['accent','density','fs','motion'].forEach(function(k){ try { var v = localStorage.getItem('pc-' + k); if (v) document.documentElement.setAttribute('data-' + k, v); } catch(e){} });
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09050F; --s2:#160A24; --card:#21102F; --card2:#2a1640;
+  --line:rgba(184,169,201,.14); --tx:#FFFFFF; --tx2:#B8A9C9;
+  --p:#7C3AED; --p2:#A855F7; --pink:#F0A6D7;
+  --ok:#22C55E; --bad:#F43F5E; --warn:#F59E0B; --info:#38BDF8;
+  --grad:linear-gradient(135deg,#7C3AED 0%,#A855F7 55%,#F0A6D7 130%);
+  --shadow:0 12px 34px rgba(0,0,0,.35);
+  --glow:0 0 0 1px rgba(168,85,247,.25),0 10px 30px rgba(124,58,237,.25);
+  --sw:268px; --r:18px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --f-head:'Sora','Segoe UI',system-ui,sans-serif; --f-body:'Manrope','Segoe UI',system-ui,sans-serif;
+}
+[data-theme="light"]{
+  --bg:#F6F1FB; --s2:#FFFFFF; --card:#FFFFFF; --card2:#F3EAFB;
+  --line:rgba(60,20,100,.12); --tx:#1B0B2E; --tx2:#6B5B7F;
+  --shadow:0 10px 28px rgba(80,30,140,.12);
+  --glow:0 0 0 1px rgba(124,58,237,.22),0 10px 26px rgba(124,58,237,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--f-body);background:var(--bg);color:var(--tx);font-size:15px;line-height:1.45;overflow-x:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+img{max-width:100%}
+h1,h2,h3{font-family:var(--f-head);font-weight:600;letter-spacing:-.01em}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hide{display:none!important}
+:focus-visible{outline:2px solid var(--p2);outline-offset:2px}
+
+/* ---------- Login ---------- */
+#login{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:calc(20px + var(--safe-t)) 18px calc(20px + var(--safe-b));position:relative;overflow:hidden;
+  background:linear-gradient(145deg,#2a0f55 0%,#6d28d9 38%,#c77dd6 72%,#F0A6D7 100%)}
+.blob{position:absolute;border-radius:42% 58% 63% 37%/45% 40% 60% 55%;filter:blur(2px);opacity:.55}
+.blob.a{width:340px;height:340px;left:-110px;top:-90px;background:linear-gradient(135deg,#F0A6D7,#A855F7)}
+.blob.b{width:300px;height:300px;right:-90px;bottom:-80px;background:linear-gradient(135deg,#7C3AED,#F0A6D7);border-radius:60% 40% 30% 70%/60% 30% 70% 40%}
+.blob.c{width:140px;height:140px;right:12%;top:12%;background:rgba(255,255,255,.28);border-radius:50%}
+.lcard{position:relative;width:100%;max-width:410px;padding:30px 24px 24px;border-radius:28px;color:#fff;
+  background:rgba(18,7,32,.58);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 70px rgba(20,5,40,.5);animation:rise .6s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.5);flex:none}
+.brand b{font-family:var(--f-head);font-size:17px;display:block}
+.brand small{color:rgba(255,255,255,.7);font-size:12.5px}
+.lcard h1{font-size:25px;margin-bottom:4px}
+.lcard p.sub{color:rgba(255,255,255,.72);margin-bottom:20px}
+.field{position:relative;margin-bottom:13px}
+.field>span{position:absolute;left:14px;top:25px;transform:translateY(-50%);display:flex;color:rgba(255,255,255,.65);pointer-events:none}
+.field input{width:100%;height:50px;border-radius:14px;padding:0 46px 0 44px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;transition:.2s}
+.field input::placeholder{color:rgba(255,255,255,.5)}
+.field input:focus{outline:none;border-color:#F0A6D7;background:rgba(255,255,255,.16);box-shadow:0 0 0 4px rgba(240,166,215,.22)}
+.field .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;color:rgba(255,255,255,.75);border-radius:10px}
+.lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 16px;font-size:13.5px;color:rgba(255,255,255,.8)}
+.lrow label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.lrow input{accent-color:#A855F7;width:17px;height:17px}
+.linkbtn{color:#F0A6D7;font-weight:600;font-size:13.5px;padding:6px 0}
+.inline-err{display:flex;gap:9px;align-items:flex-start;padding:11px 13px;border-radius:12px;background:rgba(244,63,94,.16);border:1px solid rgba(244,63,94,.45);color:#ffd5dd;font-size:13.5px;margin-bottom:14px}
+.inline-err.ok{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.45);color:#c9f7da}
+.inline-err .ic{width:18px;height:18px;margin-top:1px}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:14px;font-weight:700;transition:transform .15s,box-shadow .2s,opacity .2s;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.btn.primary{background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.4)}
+.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--line)}
+.btn.danger{background:linear-gradient(135deg,#F43F5E,#e11d74);color:#fff;box-shadow:0 8px 22px rgba(244,63,94,.35)}
+.btn.sm{height:38px;padding:0 13px;font-size:13.5px;border-radius:12px}
+.btn.block{width:100%}
+.icon-btn{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;color:var(--tx2);transition:.2s}
+.icon-btn:hover{background:var(--card2);color:var(--tx)}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .7s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- App shell ---------- */
+#app{display:grid;grid-template-columns:var(--sw) minmax(0,1fr);min-height:100dvh;transition:grid-template-columns .25s}
+#app.collapsed{--sw:84px}
+.side{position:sticky;top:0;height:100dvh;background:var(--s2);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 14px;gap:14px;z-index:40;overflow:hidden}
+.side .top{display:flex;align-items:center;gap:11px;min-height:44px}
+.side .top b{font-family:var(--f-head);font-size:16px;white-space:nowrap}
+.side .top .icon-btn{margin-left:auto}
+.me{position:relative;display:flex;gap:11px;align-items:center;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:left;width:100%;transition:.2s}
+.me:hover{box-shadow:var(--glow)}
+.me .t{min-width:0;flex:1}
+.me .t b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me .t small{display:block;color:var(--tx2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:99px;background:rgba(168,85,247,.2);color:var(--p2);font-size:11.5px;font-weight:700}
+[data-theme="light"] .badge{color:var(--p)}
+nav.menu{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1;padding-right:2px}
+nav.menu a{display:flex;align-items:center;gap:13px;height:46px;padding:0 14px;border-radius:14px;color:var(--tx2);font-weight:600;white-space:nowrap;transition:.2s}
+nav.menu a:hover{background:var(--card2);color:var(--tx)}
+nav.menu a.on{background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.35)}
+#app.collapsed .side .top b,#app.collapsed .me .t,#app.collapsed nav.menu a span{display:none}
+#app.collapsed .me{padding:8px;justify-content:center}
+#app.collapsed nav.menu a{justify-content:center;padding:0}
+#app.collapsed .side .top{flex-direction:column;align-items:center;gap:6px}
+#app.collapsed .side .top .icon-btn{margin:0}
+.av{position:relative;width:44px;height:44px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;overflow:hidden;flex:none}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av.sm{width:36px;height:36px;font-size:13px}
+.av.lg{width:76px;height:76px;font-size:26px}
+.main{min-width:0;padding:0 0 40px}
+.topbar{display:none}
+.content{max-width:1180px;margin:0 auto;padding:26px 28px}
+.page-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.page-head h1{font-size:25px}
+.page-head p{color:var(--tx2);font-size:14px;margin-top:2px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{position:relative;flex:1;min-width:200px}
+.search .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--tx2)}
+.search input,.inp{width:100%;height:46px;border-radius:14px;background:var(--card);border:1px solid var(--line);padding:0 14px 0 42px;transition:.2s}
+.inp{padding:0 14px}
+textarea.inp{height:auto;padding:12px 14px;min-height:84px;resize:vertical}
+.search input:focus,.inp:focus{outline:none;border-color:var(--p2);box-shadow:0 0 0 4px rgba(168,85,247,.18)}
+.lbl{display:block;font-size:13px;color:var(--tx2);font-weight:600;margin:12px 0 6px}
+
+/* ---------- Cards / lists ---------- */
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card h2{font-size:16.5px;margin-bottom:12px}
+.stat{position:relative;overflow:hidden;display:block;transition:transform .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-3px);box-shadow:var(--glow)}
+.stat::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--grad);opacity:.16}
+.stat .ico{width:42px;height:42px;border-radius:13px;background:var(--grad);display:grid;place-items:center;color:#fff;margin-bottom:12px;box-shadow:0 8px 20px rgba(124,58,237,.35)}
+.stat b{display:block;font-family:var(--f-head);font-size:30px;line-height:1.1}
+.stat span{color:var(--tx2);font-size:13.5px}
+.stat small{display:block;margin-top:4px;color:var(--warn);font-size:12px;font-weight:600}
+.hello{background:var(--grad);color:#fff;border:0;margin-bottom:14px;position:relative;overflow:hidden}
+.hello h1{font-size:24px}
+.hello p{opacity:.9;margin-top:4px;max-width:540px}
+.hello .sh{position:absolute;right:-40px;bottom:-60px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.18)}
+.row{display:flex;gap:13px;align-items:center;padding:13px;border-radius:16px;background:var(--card);border:1px solid var(--line);margin-bottom:10px;transition:.2s}
+.row:hover{border-color:rgba(168,85,247,.45)}
+.row .body{min-width:0;flex:1}
+.row .body b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .body .s{color:var(--tx2);font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.row .body .m{color:var(--tx2);font-size:12px;margin-top:3px;opacity:.9;word-break:break-all}
+.row .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.row .thumb{width:62px;height:62px;border-radius:14px;object-fit:cover;background:var(--card2);flex:none}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:rgba(168,85,247,.18);color:var(--p2);margin-left:6px;vertical-align:1px}
+.pill.ok{background:rgba(34,197,94,.16);color:var(--ok)}
+.pill.bad{background:rgba(244,63,94,.16);color:var(--bad)}
+.pill.warn{background:rgba(245,158,11,.18);color:var(--warn)}
+.state{text-align:center;padding:46px 18px;color:var(--tx2);border:1px dashed var(--line);border-radius:var(--r)}
+.state .ic{width:34px;height:34px;color:var(--p2);margin-bottom:8px}
+.state h3{color:var(--tx);margin-bottom:4px}
+.state .btn{margin-top:14px}
+.sk{border-radius:12px;background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:sh 1.3s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.more{display:flex;justify-content:center;margin-top:8px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:92px 1fr 46px;align-items:center;gap:10px;font-size:13.5px}
+.bar .tr{height:12px;border-radius:99px;background:var(--card2);overflow:hidden}
+.bar .fl{height:100%;border-radius:99px;background:var(--grad);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.note{color:var(--tx2);font-size:12.5px;margin-top:12px}
+.shortcuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.shortcuts a{display:flex;gap:9px;align-items:center;padding:12px;border-radius:14px;background:var(--card2);font-weight:600;font-size:14px;transition:.2s}
+.shortcuts a:hover{box-shadow:var(--glow)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:7px 12px;font-size:14px}
+.kv dt{color:var(--tx2)} .kv dd{word-break:break-word}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{height:46px;border-radius:13px;background:var(--card2);border:1px solid var(--line);font-weight:700}
+.seg button.on{background:var(--grad);color:#fff;border-color:transparent}
+.chk{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:12px;cursor:pointer}
+.chk:hover{background:var(--card2)}
+.chk input{accent-color:#A855F7;width:19px;height:19px}
+.pick{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:14px;padding:4px}
+
+/* ---------- Mobile nav ---------- */
+.bnav{display:none}
+.scrim{display:none}
+@media (max-width:900px){
+  #app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:min(86vw,300px);transform:translateX(-102%);transition:transform .28s;padding-top:calc(16px + var(--safe-t));padding-bottom:calc(16px + var(--safe-b));box-shadow:var(--shadow)}
+  #app.collapsed .side .top b,#app.collapsed .me .t,#app.collapsed nav.menu a span{display:revert}
+  #app.collapsed .side{--sw:auto}
+  #app.collapsed .me{padding:12px;justify-content:flex-start}
+  #app.collapsed nav.menu a{justify-content:flex-start;padding:0 14px}
+  #app.collapsed .side .top{flex-direction:row;align-items:center}
+  #app.collapsed .side .top .icon-btn{margin-left:auto}
+  #app.open .side{transform:none}
+  #app.open .scrim{display:block;position:fixed;inset:0;background:rgba(5,2,10,.6);z-index:35}
+  #collapseBtn{display:none}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;padding:calc(10px + var(--safe-t)) 14px 10px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .topbar b{font-family:var(--f-head);flex:1}
+  .content{padding:18px 14px calc(96px + var(--safe-b))}
+  .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--s2);border-top:1px solid var(--line);padding:6px 6px calc(6px + var(--safe-b))}
+  .bnav a,.bnav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border-radius:12px;color:var(--tx2);font-size:11.5px;font-weight:600}
+  .bnav .on{color:var(--p2)}
+  .row{flex-wrap:wrap}.row .acts{width:100%;justify-content:flex-start}
+  .kv{grid-template-columns:96px 1fr}
+}
+
+/* ---------- Modal / toast ---------- */
+.mback{position:fixed;inset:0;z-index:100;background:rgba(5,2,10,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--safe-t)) 14px calc(16px + var(--safe-b));animation:fade .2s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+.modal{width:100%;max-width:480px;max-height:100%;display:flex;flex-direction:column;border-radius:24px;background:color-mix(in srgb,var(--s2) 94%,transparent);border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.5);animation:pop .22s ease both;overflow:hidden}
+.modal.wide{max-width:640px}
+.mhead{display:flex;align-items:center;gap:8px;padding:16px 16px 6px 20px}
+.mhead h3{flex:1;font-size:18px}
+.mbody{padding:8px 20px 14px;overflow-y:auto;overscroll-behavior:contain}
+.mfoot{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:12px 20px 18px}
+.mfoot:empty{display:none}
+.merr{display:flex;gap:9px;padding:10px 12px;border-radius:12px;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.4);color:var(--bad);font-size:13.5px;margin-top:12px}
+[data-theme="light"] .merr{color:#be123c}
+.dname{display:inline-block;margin:8px 0;padding:8px 12px;border-radius:12px;background:var(--card2);font-weight:700;word-break:break-word}
+.media{width:100%;max-height:340px;border-radius:16px;object-fit:contain;background:#000;margin-bottom:12px}
+.pop{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:60;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:var(--shadow)}
+.pop button{display:flex;gap:11px;align-items:center;width:100%;padding:11px 12px;border-radius:11px;font-weight:600;text-align:left}
+.pop button:hover{background:var(--card2)}
+.pop .out{color:var(--bad)}
+#toasts{position:fixed;z-index:200;left:12px;right:12px;bottom:calc(86px + var(--safe-b));display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+@media (min-width:901px){#toasts{left:auto;right:22px;bottom:22px;align-items:flex-end}}
+.toast{pointer-events:auto;display:flex;gap:11px;align-items:center;max-width:420px;width:100%;padding:12px 14px;border-radius:15px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);animation:pop .22s ease both;font-size:14px}
+.toast .ic{width:20px;height:20px}
+.toast.success .ic{color:var(--ok)} .toast.error .ic{color:var(--bad)} .toast.warning .ic{color:var(--warn)} .toast.info .ic{color:var(--info)}
+.toast .spin{border-color:rgba(168,85,247,.3);border-top-color:var(--p2)}
+.toast span{flex:1;word-break:break-word}
+button{touch-action:manipulation}
+.modal:focus{outline:none}
+.modal.full{max-width:none}
+@media (max-width:700px){.modal.full{height:100%;border-radius:0}.mback:has(.modal.full){padding:0}}
+.av img,img.thumb,img.media,[data-video]{cursor:zoom-in}
+.viewer{position:fixed;inset:0;z-index:150;background:#000;display:flex;align-items:center;justify-content:center;animation:fade .15s ease both}
+.viewer img,.viewer video{max-width:100%;max-height:100%;object-fit:contain}
+.vx{position:absolute;top:calc(12px + var(--safe-t));right:12px;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;z-index:2}
+.wk{display:flex;gap:8px;align-items:flex-end;height:150px}
+.wk .d{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;font-size:11.5px;color:var(--tx2)}
+.wk .pair{display:flex;gap:3px;align-items:flex-end;height:calc(100% - 22px);width:100%;justify-content:center}
+.wk .b{width:42%;min-height:3px;border-radius:7px 7px 2px 2px;transition:height .7s cubic-bezier(.2,.8,.2,1)}
+.wk .b.p{background:var(--grad)} .wk .b.m{background:var(--pink)}
+.legend{display:flex;gap:14px;margin-top:12px;font-size:12.5px;color:var(--tx2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.seg2 button{height:44px;border-radius:13px;background:var(--card2);border:1px solid var(--line);font-weight:700}
+.seg2 button.on{background:var(--grad);color:#fff;border-color:transparent}
+[data-accent="blue"]{--p:#2563EB;--p2:#38BDF8;--pink:#A5B4FC;--grad:linear-gradient(135deg,#2563EB 0%,#38BDF8 55%,#A5B4FC 130%)}
+[data-accent="pink"]{--p:#DB2777;--p2:#F472B6;--pink:#FBCFE8;--grad:linear-gradient(135deg,#DB2777 0%,#F472B6 55%,#FBCFE8 130%)}
+[data-accent="emerald"]{--p:#059669;--p2:#34D399;--pink:#A7F3D0;--grad:linear-gradient(135deg,#059669 0%,#34D399 55%,#A7F3D0 130%)}
+[data-accent="orange"]{--p:#EA580C;--p2:#FB923C;--pink:#FDE68A;--grad:linear-gradient(135deg,#EA580C 0%,#FB923C 55%,#FDE68A 130%)}
+[data-fs="sm"] body{font-size:14px}
+[data-fs="lg"] body{font-size:17px}
+[data-density="compact"] .row{padding:9px 11px;margin-bottom:7px}
+[data-density="compact"] .card{padding:14px}
+[data-density="compact"] .content{padding-top:18px}
+[data-motion="off"] *{animation-duration:.001s!important;transition-duration:.001s!important}
+.seg4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.seg4 button{height:44px;border-radius:13px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:13px}
+.seg4 button.on{background:var(--grad);color:#fff;border-color:transparent}
+.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.swatches button{width:42px;height:42px;border-radius:50%;border:3px solid var(--card);outline:2px solid var(--line)}
+.swatches button.on{outline-color:var(--p2)}
+.row{position:relative}
+.row .corner{position:absolute;top:10px;right:10px;width:40px;height:40px;padding:0;border-radius:12px}
+.row .corner.br{top:auto;bottom:10px}
+.row:has(.corner:not(.br)) .body{padding-right:46px}
+.row:has(> .acts > .corner.br:only-child){padding-bottom:58px}
+.row:has(.corner.br) .acts{padding-right:48px}
+.row .acts:has(> .corner:only-child){display:contents}
+#topAv,#meAv{cursor:pointer}
+.menu-out{display:flex;align-items:center;gap:13px;height:46px;padding:0 14px;border-radius:14px;color:var(--bad);font-weight:700;background:rgba(244,63,94,.12);flex:none;transition:.2s}
+.menu-out:hover{background:rgba(244,63,94,.2)}
+#app.collapsed .menu-out{justify-content:center;padding:0}
+#app.collapsed .menu-out span{display:none}
+@media (max-width:900px){#app.collapsed .menu-out{justify-content:flex-start;padding:0 14px}#app.collapsed .menu-out span{display:inline}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div id="boot" style="min-height:100dvh;display:grid;place-items:center"><div class="spin" style="border-color:rgba(168,85,247,.3);border-top-color:#A855F7;width:34px;height:34px"></div></div>
+
+<!-- ================= LOGIN ================= -->
+<section id="login" class="hide">
+  <i class="blob a"></i><i class="blob b"></i><i class="blob c"></i>
+  <form class="lcard" id="loginForm" novalidate>
+    <div class="brand"><div class="logo" id="loginLogo"></div><div><b>Private Community</b><small>Admin panel</small></div></div>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in with your administrator account to manage the community.</p>
+    <div id="loginMsg"></div>
+    <div class="field"><span id="icMail"></span><input id="email" type="email" inputmode="email" autocomplete="off" placeholder="Admin email" aria-label="Email address" required></div>
+    <div class="field"><span id="icLock"></span><input id="password" type="password" autocomplete="new-password" placeholder="Password" aria-label="Password" required>
+      <button type="button" class="eye" id="togglePw" aria-label="Show password"></button></div>
+    <div class="lrow"><label><input type="checkbox" id="remember" checked> Keep me signed in</label><button type="button" class="linkbtn" id="forgot">Forgot password?</button></div>
+    <button class="btn primary block" id="loginBtn" type="submit">Sign in</button>
+  </form>
+</section>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hide">
+  <aside class="side" id="side">
+    <div class="top"><div class="logo" id="sideLogo"></div><b>Private Community</b>
+      <button class="icon-btn" id="collapseBtn" aria-label="Collapse sidebar"></button></div>
+    <div style="position:relative">
+      <button class="me" id="meBtn" aria-haspopup="true" aria-expanded="false"><span id="meAv"></span>
+        <span class="t"><b id="meName">…</b><small id="meMail"></small><span class="badge" id="meRole">Admin</span></span></button>
+      <div class="pop hide" id="mePop" role="menu"></div>
+    </div>
+    <nav class="menu" id="menu" aria-label="Main"></nav>
+    <button class="menu-out" id="sideOut" type="button"></button>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="main">
+    <header class="topbar"><button class="icon-btn" id="menuBtn" aria-label="Open menu"></button><b id="topTitle">Dashboard</b><span id="topAv"></span></header>
+    <div class="content" id="view"></div>
+  </main>
+  <nav class="bnav" id="bnav" aria-label="Quick navigation"></nav>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, collection, collectionGroup, query, where, orderBy, limit, startAfter, addDoc, updateDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, getCountFromServer, onSnapshot, documentId } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+
+/* =====================================================================
+   FIREBASE CONFIG — replace the PASTE_ values with the values from your
+   current admin.html / firebase.js. Project ID and auth domain are set.
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyB_bIDsH3nIW7z_on-Qf-JvYB991kAY45M",
+  authDomain: "private-13f25.firebaseapp.com",
+  projectId: "private-13f25",
+  storageBucket: "private-13f25.firebasestorage.app",
+  messagingSenderId: "540265602395",
+  appId: "1:540265602395:web:2bac26192dce4407e70e7e",
+  measurementId: "G-8SV76BEZV7"
+};
+const CONFIG_MISSING = firebaseConfig.apiKey.startsWith("PASTE_");
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const fns = getFunctions(app);
+
+/* ---------- Utilities ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const P = {
+  home: "M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",
+  users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",
+  image: "M3 5h18v14H3zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 19",
+  msg: "M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z",
+  layers: "M12 2l10 5-10 5L2 7zM2 12l10 5 10-5M2 17l10 5 10-5",
+  chat: "M4 4h16v12H8l-4 4z",
+  flag: "M5 21V4M5 4h12l-2 4 2 4H5",
+  bell: "M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0",
+  settings: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M16 4v4M10 10v4M18 16v4",
+  menu: "M4 6h16M4 12h16M4 18h16",
+  search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3",
+  refresh: "M21 12a9 9 0 1 1-3-6.7M21 3v6h-6",
+  trash: "M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6",
+  eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6",
+  x: "M6 6l12 12M18 6L6 18",
+  check: "M5 12l5 5 9-10",
+  alert: "M12 3l10 18H2zM12 10v5M12 18v.01",
+  info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 11v5M12 8v.01",
+  lock: "M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4",
+  mail: "M3 5h18v14H3zM3 6l9 7 9-7",
+  logout: "M9 21H5V3h4M16 17l5-5-5-5M21 12H9",
+  plus: "M12 5v14M5 12h14",
+  user: "M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
+  panel: "M3 4h18v16H3zM9 4v16",
+  edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+  download: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  send: "M22 2L11 13M22 2l-7 20-4-9-9-4z",
+  more: "M5 12h.01M12 12h.01M19 12h.01",
+  upload: "M12 16V4M7 9l5-5 5 5M4 20h16"
+};
+const ic = (n, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[n] || ""}"/></svg>`;
+const pick = (o, keys) => { for (const k of keys) { const v = o?.[k]; if (v !== undefined && v !== null && String(v).trim() !== "") return v; } return ""; };
+const toDate = t => t?.toDate ? t.toDate() : (t?.seconds ? new Date(t.seconds * 1000) : (t ? new Date(t) : null));
+const fmt = t => { const d = toDate(t); return d && !isNaN(d) ? d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—"; };
+const num = n => n === null || n === undefined ? "—" : Number(n).toLocaleString();
+const initials = n => (String(n || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("") || "?").toUpperCase();
+const avatar = (name, url, cls = "") => `<span class="av ${cls}">${esc(initials(name))}${url ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>`;
+const uName = u => pick(u, ["fullName", "name", "displayName", "username"]) || "Unnamed member";
+const uPhoto = u => pick(u, ["profilePhoto", "photoURL", "photo", "profilePic", "profileImage", "avatar", "imageUrl"]);
+const isVideo = u => /\.(mp4|webm|mov|m4v)(\?|$)/i.test(u) || /\/video\/upload\//.test(u);
+const skeleton = (n = 4, h = 70) => Array.from({ length: n }, () => `<div class="sk" style="height:${h}px;margin-bottom:10px"></div>`).join("");
+const errText = e => e?.code === "permission-denied" ? "Firestore rules blocked this request for your admin account." : (e?.message || "Something went wrong.");
+const userCache = new Map();
+async function getUser(uid) {
+  if (!uid) return null;
+  if (userCache.has(uid)) return userCache.get(uid);
+  let u = null;
+  try { const s = await getDoc(doc(db, "users", uid)); u = s.exists() ? { id: uid, ...s.data() } : null; } catch (e) { u = null; }
+  userCache.set(uid, u); return u;
+}
+async function pageDocs(base, field, cursor, size = 20) {
+  const c = cursor ? [startAfter(cursor)] : [];
+  try { return (await getDocs(query(base, orderBy(field, "desc"), ...c, limit(size)))).docs; }
+  catch (e) { if (e.code === "permission-denied") throw e; return (await getDocs(query(base, orderBy(documentId()), ...c, limit(size)))).docs; }
+}
+async function delAll(colRef) {
+  for (;;) {
+    const s = await getDocs(query(colRef, limit(300)));
+    if (s.empty) return;
+    const b = writeBatch(db); s.docs.forEach(d => b.delete(d.ref)); await b.commit();
+  }
+}
+const primitives = o => Object.entries(o).filter(([k, v]) => !k.startsWith("_") && v !== null && typeof v !== "object" || v?.toDate).map(([k, v]) => [k, v?.toDate ? fmt(v) : String(v)]);
+const kv = rows => `<dl class="kv">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`;
+
+/* ---------- Toasts ---------- */
+const TI = { success: "check", error: "alert", warning: "alert", info: "info" };
+function toast(type, msg, { loading = false, ms = 4200 } = {}) {
+  const el = document.createElement("div"); el.className = `toast ${type}`; el.setAttribute("role", type === "error" ? "alert" : "status");
+  const paint = (t, m, l) => { el.className = `toast ${t}`; el.innerHTML = `${l ? '<div class="spin"></div>' : ic(TI[t] || "info")}<span>${esc(m)}</span>`; };
+  paint(type, msg, loading); $("#toasts").appendChild(el);
+  let timer = null; const close = () => { clearTimeout(timer); el.remove(); };
+  if (!loading) timer = setTimeout(close, ms);
+  return { close, update(t, m) { paint(t, m, false); clearTimeout(timer); timer = setTimeout(close, ms); } };
+}
+
+/* ---------- Modal system ---------- */
+const stack = [];
+function modal({ title, html = "", node = null, actions = [], wide = false, full = false, dismiss = true, backdrop = true, beforeClose = null }) {
+  const prev = document.activeElement;
+  const back = document.createElement("div"); back.className = "mback";
+  back.innerHTML = `<div class="modal ${wide ? "wide" : ""} ${full ? "full" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="mhead"><h3>${esc(title)}</h3><button class="icon-btn" data-x aria-label="Close dialog">${ic("x")}</button></div><div class="mbody"></div><div class="mfoot"></div></div>`;
+  const body = $(".mbody", back), foot = $(".mfoot", back);
+  if (node) body.appendChild(node); else body.innerHTML = html;
+  let busy = false, done; const closed = new Promise(r => done = r);
+  const api = { el: back, body, closed, get busy() { return busy; },
+    error(msg) { $(".merr", body)?.remove(); if (msg) body.insertAdjacentHTML("beforeend", `<div class="merr" role="alert">${ic("alert")}<span>${esc(msg)}</span></div>`); },
+    setBusy(b, btn) { busy = b; back.querySelectorAll("button").forEach(x => { x.disabled = b; }); btn?.querySelector(".spin")?.remove(); if (b && btn) btn.insertAdjacentHTML("afterbegin", '<div class="spin"></div>'); },
+    async close(force = false) {
+      if (busy) return;
+      if (!force && beforeClose && !(await beforeClose())) return;
+      const i = stack.indexOf(api); if (i > -1) stack.splice(i, 1);
+      back.remove(); done(); try { prev?.focus?.(); } catch (e) {}
+    } };
+  actions.forEach(a => {
+    const b = document.createElement("button"); b.type = "button"; b.className = `btn ${a.kind || "ghost"}`; b.textContent = a.label; if (a.aria) b.setAttribute("aria-label", a.aria);
+    b.onclick = async () => {
+      if (!a.run) return api.close(true);
+      api.error(""); api.setBusy(true, b);
+      try { await a.run(api); api.setBusy(false, b); if (a.close !== false) api.close(true); }
+      catch (e) { console.error(e); api.setBusy(false, b); api.error(errText(e)); }
+    };
+    foot.appendChild(b);
+  });
+  $(".mhead [data-x]", back).onclick = () => api.close();
+  back.addEventListener("mousedown", e => { if (e.target.closest("button")) e.preventDefault(); else if (e.target === back && dismiss && backdrop) api.close(); });
+  back.addEventListener("keydown", e => {
+    if (e.key === "Tab") { const f = [...back.querySelectorAll("button:not([disabled]),input,textarea,select,[tabindex]")].filter(x => x.offsetParent); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+  });
+  document.body.appendChild(back); stack.push(api);
+  const box = $(".modal", back); box.tabIndex = -1; box.focus({ preventScroll: true });
+  api.dismissible = dismiss; return api;
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && stack.length) { const t = stack[stack.length - 1]; if (t.dismissible && !t.busy) t.close(); } });
+function confirmDialog({ title, name, text, label = "Delete", kind = "danger", run }) {
+  return new Promise(res => {
+    let ok = false;
+    const m = modal({ title, backdrop: false, html: `${name ? `<div class="dname">${esc(name)}</div>` : ""}<p style="color:var(--tx2)">${text}</p>`,
+      actions: [{ label: "Cancel", kind: "ghost" }, { label, kind, run: async a => { await run(a); ok = true; } }] });
+    m.closed.then(() => res(ok));
+  });
+}
+function notice(title, text) { return modal({ title, html: `<p style="color:var(--tx2)">${text}</p>`, actions: [{ label: "Got it", kind: "primary" }] }); }
+function fail(e, what) {
+  console.error(e);
+  if (e?.code === "permission-denied") notice("Permission denied", `Firestore refused <b>${esc(what)}</b>. Make sure your account has an active <code>admins/{uid}</code> document and that your Firestore rules let admins perform this action.`);
+  else notice("Operation failed", `${esc(what)} did not complete. ${esc(errText(e))}`);
+}
+
+/* ---------- Theme ---------- */
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+function applyTheme(pref) {
+  try { localStorage.setItem("pc-theme", pref); } catch (e) {}
+  const dark = pref === "dark" || (pref === "system" && mq.matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  document.documentElement.setAttribute("data-pref", pref);
+}
+mq.addEventListener?.("change", () => { if (document.documentElement.getAttribute("data-pref") === "system") applyTheme("system"); });
+
+/* ---------- Static icons ---------- */
+$("#loginLogo").innerHTML = $("#sideLogo").innerHTML = ic("layers");
+$("#icMail").innerHTML = ic("mail"); $("#icLock").innerHTML = ic("lock");
+$("#togglePw").innerHTML = ic("eye"); $("#menuBtn").innerHTML = ic("menu"); $("#collapseBtn").innerHTML = ic("panel");
+
+/* ---------- Auth state ---------- */
+let me = null, adminDoc = null, myUser = null, unsubAdmin = null, loginNotice = null, idleTimer = null;
+const show = id => { ["boot", "login", "app"].forEach(x => $("#" + x).classList.toggle("hide", x !== id)); };
+function showLogin() {
+  show("login"); $("#loginForm").reset(); $("#loginMsg").innerHTML = "";
+  if (CONFIG_MISSING) setLoginMsg("Paste your existing Firebase config values into the firebaseConfig block at the top of the script, then reload.");
+  else if (loginNotice) { setLoginMsg(loginNotice.text, loginNotice.ok); loginNotice = null; }
+}
+function setLoginMsg(text, ok = false) { $("#loginMsg").innerHTML = text ? `<div class="inline-err ${ok ? "ok" : ""}" role="alert">${ic(ok ? "check" : "alert")}<span>${esc(text)}</span></div>` : ""; }
+async function verifyAdmin(u) {
+  try {
+    const s = await getDoc(doc(db, "admins", u.uid));
+    if (!s.exists()) return { ok: false, why: "This account is not an administrator." };
+    if (s.data().active !== true) return { ok: false, why: "This administrator account is not active." };
+    return { ok: true, data: s.data() };
+  } catch (e) { return { ok: false, why: e.code === "permission-denied" ? "Access to the admin record was denied by Firestore rules." : errText(e) }; }
+}
+onAuthStateChanged(auth, async u => {
+  unsubAdmin?.(); unsubAdmin = null;
+  if (!u) { me = null; clearTimeout(idleTimer); showLogin(); return; }
+  const v = await verifyAdmin(u);
+  if (!v.ok) { loginNotice = { text: v.why }; await signOut(auth); return; }
+  me = u; adminDoc = v.data; myUser = await getUser(u.uid);
+  /* live revocation watch */
+  unsubAdmin = onSnapshot(doc(db, "admins", u.uid), s => {
+    if (!s.exists() || s.data().active !== true) { loginNotice = { text: "Your administrator access was revoked." }; signOut(auth); }
+    else { adminDoc = s.data(); paintMe(); }
+  }, () => {});
+  startApp();
+});
+
+/* ---------- Login form ---------- */
+$("#togglePw").onclick = () => { const i = $("#password"); const h = i.type === "password"; i.type = h ? "text" : "password"; $("#togglePw").setAttribute("aria-label", h ? "Hide password" : "Show password"); };
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); setLoginMsg("");
+  const em = $("#email").value.trim(), pw = $("#password").value;
+  if (!em || !pw) return setLoginMsg("Enter your email and password.");
+  const btn = $("#loginBtn"); btn.disabled = true; btn.innerHTML = '<div class="spin"></div> Signing in…';
+  try {
+    await setPersistence(auth, $("#remember").checked ? browserLocalPersistence : browserSessionPersistence);
+    await signInWithEmailAndPassword(auth, em, pw);
+  } catch (err) {
+    const m = { "auth/invalid-credential": "Email or password is incorrect.", "auth/wrong-password": "Email or password is incorrect.", "auth/user-not-found": "Email or password is incorrect.", "auth/invalid-email": "That email address is not valid.", "auth/too-many-requests": "Too many attempts. Wait a few minutes or reset your password.", "auth/network-request-failed": "No connection. Check your internet and try again.", "auth/user-disabled": "This account has been disabled." };
+    setLoginMsg(m[err.code] || err.message);
+  } finally { btn.disabled = false; btn.textContent = "Sign in"; }
+});
+$("#forgot").onclick = async () => {
+  const em = $("#email").value.trim();
+  if (!em) return setLoginMsg("Type your admin email above, then tap Forgot password.");
+  try { await sendPasswordResetEmail(auth, em); setLoginMsg("If that account exists, a reset link has been sent to " + em + ".", true); }
+  catch (err) { setLoginMsg(err.code === "auth/invalid-email" ? "That email address is not valid." : errText(err)); }
+};
+
+/* ---------- Shell ---------- */
+const NAV = [["dashboard", "Dashboard", "home"], ["members", "Members", "users"], ["posts", "Posts", "image"], ["comments", "Comments", "msg"], ["groups", "Groups", "layers"], ["chats", "Chats", "chat"], ["reports", "Reports", "flag"], ["notifications", "Notifications", "bell"], ["settings", "Settings", "settings"]];
+const BOTTOM = ["dashboard", "members", "posts", "groups"];
+const adminName = () => pick(myUser, ["fullName", "name", "displayName"]) || pick(adminDoc, ["name", "fullName", "displayName"]) || me?.displayName || (me?.email || "Admin").split("@")[0];
+const adminPhoto = () => uPhoto(myUser) || pick(adminDoc, ["photoURL", "photo", "profilePhoto"]) || me?.photoURL || "";
+function paintMe() {
+  if (!me) return;
+  $("#meAv").innerHTML = avatar(adminName(), adminPhoto()); $("#topAv").innerHTML = avatar(adminName(), adminPhoto(), "sm");
+  $("#meName").textContent = adminName(); $("#meMail").textContent = me.email || ""; $("#meRole").textContent = pick(adminDoc, ["role"]) || "Admin";
+}
+let started = false;
+function startApp() {
+  show("app"); paintMe(); armIdle();
+  if (!started) {
+    started = true;
+    $("#menu").innerHTML = NAV.map(([r, l, i]) => `<a href="#${r}" data-r="${r}">${ic(i)}<span>${l}</span></a>`).join("");
+    $("#bnav").innerHTML = BOTTOM.map(r => { const n = NAV.find(x => x[0] === r); return `<a href="#${r}" data-r="${r}">${ic(n[2])}<span>${n[1]}</span></a>`; }).join("") + `<button id="moreBtn" aria-label="More sections">${ic("more")}<span>More</span></button>`;
+    $("#sideOut").innerHTML = `${ic("logout")}<span>Sign out</span>`;
+    $("#sideOut").onclick = () => { $("#app").classList.remove("open"); signOutDialog(); };
+    const goProfile = e => { e.stopPropagation(); $("#app").classList.remove("open"); location.hash = "profile"; };
+    [$("#topAv"), $("#meAv")].forEach(el => { el.onclick = goProfile; el.setAttribute("role", "link"); el.setAttribute("aria-label", "Open my profile"); });
+    $("#moreBtn").onclick = () => $("#app").classList.add("open");
+    $("#menuBtn").onclick = () => $("#app").classList.add("open");
+    $("#scrim").onclick = () => $("#app").classList.remove("open");
+    $("#menu").onclick = () => $("#app").classList.remove("open");
+    $("#collapseBtn").onclick = () => { const c = $("#app").classList.toggle("collapsed"); try { localStorage.setItem("pc-collapsed", c ? "1" : "0"); } catch (e) {} };
+    try { if (localStorage.getItem("pc-collapsed") === "1") $("#app").classList.add("collapsed"); } catch (e) {}
+    const pop = $("#mePop");
+    pop.innerHTML = [["user", "View profile", "view"], ["user", "Edit profile", "edit"], ["settings", "Settings", "settings"], ["lock", "Change password", "pw"], ["logout", "Sign out", "out"]].map(([i, l, a]) => `<button data-a="${a}" class="${a === "out" ? "out" : ""}" role="menuitem">${ic(i)}${l}</button>`).join("");
+    $("#meBtn").onclick = e => { e.stopPropagation(); const o = pop.classList.toggle("hide"); $("#meBtn").setAttribute("aria-expanded", String(!o)); };
+    document.addEventListener("click", () => pop.classList.add("hide"));
+    pop.onclick = e => { const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; $("#app").classList.remove("open");
+      ({ view: () => { location.hash = "profile"; }, edit: editProfile, settings: () => { location.hash = "settings"; }, pw: passwordDialog, out: signOutDialog })[a](); };
+    window.addEventListener("hashchange", route);
+  }
+  route();
+}
+function signOutDialog() {
+  modal({ title: "Sign out?", html: '<p style="color:var(--tx2)">You will need your email and password to get back in. Signing out here only ends this browser\'s session.</p>',
+    actions: [{ label: "Stay signed in" }, { label: "Sign out", kind: "danger", run: async () => { await signOut(auth); } }] });
+}
+function viewProfile() {
+  modal({ title: "Your profile", html: `<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${avatar(adminName(), adminPhoto(), "lg")}<div><h3>${esc(adminName())}</h3><div style="color:var(--tx2)">${esc(me.email)}</div><span class="badge">${esc(pick(adminDoc, ["role"]) || "Admin")}</span></div></div>${kv([["UID", me.uid], ["Status", adminDoc?.active === true ? "Active" : "Inactive"], ["Last sign-in", me.metadata?.lastSignInTime || "—"]])}`,
+    actions: [{ label: "Edit profile", run: async () => { setTimeout(editProfile, 0); } }, { label: "Close", kind: "primary" }] });
+}
+function resizeToDataURL(file, max = 400) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("That image could not be read. Try a different photo.")); };
+    img.src = url;
+  });
+}
+/* Photos are resized in the browser and kept as small data URLs: no cloud storage service. */
+function shrinkImage(file, max = 320) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height), size = Math.min(max, side);
+      const c = document.createElement("canvas"); c.width = c.height = size;
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, size, size);
+      x.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      const out = c.toDataURL("image/jpeg", 0.82);
+      out.length > 200000 ? rej(new Error("That photo is too large even after shrinking. Choose another.")) : res(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("That image could not be read.")); };
+    img.src = url;
+  });
+}
+function photoPicker(name, url) {
+  let data = null, removed = false;
+  const node = document.createElement("div");
+  node.innerHTML = `<div style="display:flex;gap:14px;align-items:center"><span class="pp-av">${avatar(name, url, "lg")}</span><div style="flex:1;min-width:0"><div style="display:flex;flex-wrap:wrap;gap:8px"><label class="btn ghost sm" style="cursor:pointer">${ic("image")} Choose photo<input type="file" accept="image/*" class="hide"></label>${url ? `<button type="button" class="btn ghost sm" data-rm>${ic("trash")} Remove</button>` : ""}</div><div class="note pp-name" style="margin-top:8px"></div></div></div>`;
+  const input = $("input", node), label = $(".pp-name", node);
+  input.onchange = async () => {
+    const f = input.files[0]; if (!f) return;
+    if (!f.type.startsWith("image/")) { input.value = ""; return toast("warning", "Choose an image file."); }
+    try { data = await shrinkImage(f); } catch (e) { input.value = ""; return toast("error", e.message); }
+    removed = false; $(".pp-av", node).innerHTML = avatar(name, data, "lg"); label.textContent = f.name;
+  };
+  $("[data-rm]", node)?.addEventListener("click", e => { data = null; input.value = ""; removed = true; $(".pp-av", node).innerHTML = avatar(name, "", "lg"); label.textContent = "Photo will be removed when you save."; e.currentTarget.remove(); });
+  return { node, changed: () => !!data || removed, resolve: async current => data ? data : (removed ? "" : current) };
+}
+function editProfile() {
+  const startName = adminName(), startPhoto = adminPhoto();
+  const pp = photoPicker(startName, startPhoto);
+  const n = document.createElement("div"); n.appendChild(pp.node);
+  n.insertAdjacentHTML("beforeend", `<label class="lbl" for="epName">Display name</label><input class="inp" id="epName" maxlength="60" value="${esc(startName)}"><p class="note">Your name and photo are saved to your member profile. Photos are cropped to a small square and stored in your database.</p>`);
+  const dirty = () => pp.changed() || $("#epName", n).value.trim() !== startName;
+  modal({ title: "Edit profile", node: n, beforeClose: () => !dirty() ? true : confirmDialog({ title: "Discard changes?", text: "Your profile changes have not been saved.", label: "Discard", run: async () => {} }),
+    actions: [{ label: "Cancel" }, { label: "Save changes", kind: "primary", run: async () => {
+      const v = $("#epName", n).value.trim(); if (v.length < 2) throw new Error("Enter a name with at least 2 characters.");
+      const photo = await pp.resolve(startPhoto);
+      await updateProfile(me, { displayName: v });
+      try { await setDoc(doc(db, "users", me.uid), { uid: me.uid, fullName: v, profilePhoto: photo, email: me.email || "" }, { merge: true }); }
+      catch (e) { throw new Error("Your sign-in name was updated, but your member profile could not be saved: " + errText(e)); }
+      myUser = { ...(myUser || {}), id: me.uid, fullName: v, profilePhoto: photo }; userCache.set(me.uid, myUser);
+      paintMe(); toast("success", "Profile updated"); if (["#settings", "#dashboard", ""].includes(location.hash)) route();
+    } }] });
+}
+function passwordDialog() {
+  const n = document.createElement("div");
+  const f = (id, l, ac) => `<label class="lbl" for="${id}">${l}</label><input class="inp" id="${id}" type="password" autocomplete="${ac}">`;
+  n.innerHTML = f("pwCur", "Current password", "current-password") + f("pwNew", "New password (min 8 characters)", "new-password") + f("pwCon", "Confirm new password", "new-password") + `<label class="chk" style="margin-top:6px"><input type="checkbox" id="pwShow"> Show passwords</label>`;
+  $("#pwShow", n).onchange = e => n.querySelectorAll("input.inp").forEach(i => i.type = e.target.checked ? "text" : "password");
+  modal({ title: "Change password", node: n, actions: [{ label: "Cancel" }, { label: "Update password", kind: "primary", run: async () => {
+    const c = $("#pwCur", n).value, a = $("#pwNew", n).value, b = $("#pwCon", n).value;
+    if (!c) throw new Error("Enter your current password.");
+    if (a.length < 8) throw new Error("The new password needs at least 8 characters.");
+    if (a !== b) throw new Error("The new passwords do not match.");
+    if (a === c) throw new Error("Choose a password different from the current one.");
+    try { await reauthenticateWithCredential(me, EmailAuthProvider.credential(me.email, c)); }
+    catch (e) { throw new Error(["auth/invalid-credential", "auth/wrong-password"].includes(e.code) ? "Current password is incorrect." : errText(e)); }
+    await updatePassword(me, a); toast("success", "Password updated");
+  } }] });
+}
+
+/* ---------- Auto sign-out when idle (Settings > Security) ---------- */
+function armIdle() {
+  clearTimeout(idleTimer);
+  let m = 0; try { m = +localStorage.getItem("pc-idle") || 0; } catch (e) {}
+  if (!m || !me) return;
+  idleTimer = setTimeout(() => { loginNotice = { text: "You were signed out after a period of inactivity." }; signOut(auth); }, m * 60000);
+}
+["pointerdown", "keydown", "scroll"].forEach(ev => document.addEventListener(ev, () => { if (me) armIdle(); }, { passive: true, capture: true }));
+
+/* ---------- Router ---------- */
+let token = 0;
+async function route() {
+  if (!me) return;
+  const r = (location.hash.slice(1) || "dashboard"); const key = views[r] ? r : "dashboard";
+  document.querySelectorAll("[data-r]").forEach(a => { const on = a.dataset.r === key; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
+  $("#topTitle").textContent = NAV.find(n => n[0] === key)?.[1] || "My profile";
+  const my = ++token; const host = $("#view"); host.innerHTML = ""; const root = document.createElement("div"); host.appendChild(root);
+  try { await views[key](root, () => my === token); } catch (e) { if (my === token) root.innerHTML = stateHtml("alert", "Could not load this page", errText(e), true); console.error(e); }
+  if (my === token) window.scrollTo(0, 0);
+}
+const reload = () => route();
+function stateHtml(icon, title, text, retry = false) { return `<div class="state">${ic(icon)}<h3>${esc(title)}</h3><p>${esc(text)}</p>${retry ? `<button class="btn primary" data-retry>${ic("refresh")} Retry</button>` : ""}</div>`; }
+document.addEventListener("click", e => { if (e.target.closest("[data-retry]")) reload(); });
+const head = (t, s, extra = "") => `<div class="page-head"><div><h1>${esc(t)}</h1><p>${esc(s)}</p></div><div class="tools">${extra}</div></div>`;
+const refreshBtn = `<button class="btn ghost sm" data-retry>${ic("refresh")} Refresh</button>`;
+
+/* ---------- Generic paginated list ---------- */
+function listView(cfg) {
+  return async (root, alive) => {
+    root.innerHTML = head(cfg.title, cfg.sub, (cfg.tools || "") + refreshBtn) + `<div class="tools" style="margin-bottom:14px"><label class="search">${ic("search")}<input id="q" type="search" placeholder="${esc(cfg.ph)}" aria-label="${esc(cfg.ph)}"></label></div><div id="list">${skeleton()}</div><div class="more" id="more"></div>`;
+    let items = [], cursor = null, done = false, q = ""; const list = $("#list", root), more = $("#more", root);
+    cfg.setup?.(root, () => items);
+    const paint = () => {
+      const f = q ? items.filter(i => cfg.text(i).toLowerCase().includes(q)) : items;
+      list.innerHTML = f.length ? f.map(cfg.row).join("") : stateHtml("search", items.length ? "No matches" : cfg.empty, items.length ? "Nothing in the loaded records matches your search. Load more to look further." : cfg.emptySub || "");
+      more.innerHTML = done ? "" : `<button class="btn ghost" id="loadMore">Load more</button>`;
+      cfg.after?.(list, f);
+    };
+    async function load() {
+      const b = $("#loadMore", root); if (b) { b.disabled = true; b.innerHTML = '<div class="spin"></div> Loading'; }
+      try {
+        const docs = await cfg.fetch(cursor); if (!alive()) return;
+        cursor = docs[docs.length - 1] || cursor; if (docs.length < (cfg.size || 20)) done = true;
+        const mapped = await Promise.all(docs.map(async d => { const o = { id: d.id, ref: d.ref, ...d.data() }; await cfg.enrich?.(o); return o; }));
+        items = items.concat(mapped); paint();
+      } catch (e) { if (!alive()) return; if (!items.length) list.innerHTML = stateHtml("alert", cfg.err || "Could not load records", errText(e), true); else toast("error", errText(e)); if (b) { b.disabled = false; b.textContent = "Load more"; } }
+    }
+    $("#q", root).addEventListener("input", async e => { q = e.target.value.trim().toLowerCase(); paint(); if (q && cfg.byId && !items.some(i => cfg.text(i).toLowerCase().includes(q)) && q.length >= 20) { const o = await cfg.byId(e.target.value.trim()); if (o && !items.some(i => i.id === o.id)) { items.unshift(o); paint(); } } });
+    root.addEventListener("click", e => { if (e.target.closest("#loadMore")) return load(); const b = e.target.closest("[data-act]"); if (!b) return; const it = items.find(i => i.id === b.dataset.id); if (it) cfg.act(b.dataset.act, it, { items, repaint: paint, remove: id => { items = items.filter(i => i.id !== id); paint(); } }); });
+    await load();
+  };
+}
+const act = (a, id, label, ic_, kind = "ghost", pos = "br") => { const c = pos || (kind === "danger" ? "br" : ""); return c ? `<button class="btn ${kind} sm corner ${c === "br" ? "br" : ""}" data-act="${a}" data-id="${esc(id)}" aria-label="${esc(label)}" title="${esc(label)}">${ic(ic_)}</button>` : `<button class="btn ${kind} sm" data-act="${a}" data-id="${esc(id)}" aria-label="${esc(label)}">${ic(ic_)}${esc(label.split(" ")[0])}</button>`; };
+
+/* ---------- Views ---------- */
+const views = {};
+
+async function commentTotal() {
+  try { return { n: (await getCountFromServer(collectionGroup(db, "comments"))).data().count, exact: true }; } catch (e) {}
+  try {
+    const ps = await getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(200)));
+    const each = await Promise.all(ps.docs.map(d => getCountFromServer(collection(db, "posts", d.id, "comments")).then(x => x.data().count).catch(() => 0)));
+    return { n: each.reduce((a, b) => a + b, 0), exact: ps.size < 200 };
+  } catch (e) { return { n: null, exact: false }; }
+}
+/* Dashboard */
+views.dashboard = async (root, alive) => {
+  root.innerHTML = `<div class="card hello"><span class="sh"></span><h1>Welcome back, ${esc(adminName().split(" ")[0])}</h1><p>Here is what is in your community right now.</p></div><div class="grid stats">${skeleton(5, 120)}</div>`;
+  const cnt = async q => { try { return (await getCountFromServer(q)).data().count; } catch (e) { return null; } };
+  const [m, p, cc, g] = await Promise.all([cnt(collection(db, "users")), cnt(collection(db, "posts")), commentTotal(), cnt(query(collection(db, "chats"), where("type", "==", "group")))]);
+  const c = cc?.n ?? null;
+  if (!alive()) return;
+  if ([m, p, g].every(v => v === null)) { root.innerHTML = stateHtml("alert", "Could not read community data", "Firestore denied the counts. Check that your admin document is active and your rules allow admins to read.", true); return; }
+  const cards = [["members", "Members", "users", m], ["posts", "Posts", "image", p], ["comments", "Comments", "msg", c], ["groups", "Groups", "layers", g]];
+  const max = Math.max(1, ...cards.map(x => x[3] || 0));
+  root.innerHTML = `<div class="card hello"><span class="sh"></span><h1>Welcome back, ${esc(adminName().split(" ")[0])}</h1><p>Here is what is in your community right now.</p></div>
+  <div class="grid stats" style="margin-bottom:14px">${cards.map(([rt, l, i, v]) => `<a class="card stat" href="#${rt}"><div class="ico">${ic(i)}</div><b>${num(v)}${rt === "comments" && cc && cc.exact === false ? "+" : ""}</b><span>${l}</span>${v === null ? `<small>Count unavailable</small>` : ""}</a>`).join("")}</div>
+  <div class="grid two" style="margin-bottom:14px">
+    <div class="card"><h2>Community totals</h2><div class="bars">${cards.map(([, l, , v]) => `<div class="bar"><span>${l}</span><div class="tr"><div class="fl" style="width:0" data-w="${Math.round((v || 0) / max * 100)}"></div></div><b>${num(v)}</b></div>`).join("")}</div><p class="note">These are live totals. The app does not store daily history, so there is no trend line to show.</p></div>
+    <div class="card"><h2>Shortcuts</h2><div class="shortcuts">${NAV.slice(1).map(([rt, l, i]) => `<a href="#${rt}">${ic(i)}${l}</a>`).join("")}</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px"><h2>Last 7 days</h2><div id="wk">${skeleton(1, 150)}</div></div>
+  <div class="card"><h2>Recent activity</h2><div id="ra">${skeleton(4, 64)}</div><p class="note">The 5 newest posts, comments and new members, merged by date.</p></div>`;
+  requestAnimationFrame(() => root.querySelectorAll("[data-w]").forEach(b => b.style.width = b.dataset.w + "%"));
+  try {
+    const [pd, md] = await Promise.all([pageDocs(collection(db, "posts"), "createdAt", null, 25), pageDocs(collection(db, "users"), "createdAt", null, 25)]);
+    let cd = [];
+    try { cd = await pageDocs(collectionGroup(db, "comments"), "createdAt", null, 25); }
+    catch (e) { for (const d of pd.slice(0, 12)) { try { cd.push(...(await getDocs(query(collection(db, "posts", d.id, "comments"), limit(5)))).docs); } catch (x) {} } }
+    const who = async x => { const au = await getUser(pick(x, ["authorId", "uid", "userId"])); return { name: pick(x, ["fullName", "authorName", "userName", "name"]) || uName(au), photo: uPhoto(au) }; };
+    const ev = [
+      ...await Promise.all(pd.map(async d => { const x = d.data(), w = await who(x); return { kind: "Post", date: toDate(x.createdAt), ...w, text: pick(x, ["caption", "text", "content"]) || "Shared a post", media: postMedia(x) }; })),
+      ...await Promise.all(cd.map(async d => { const x = d.data(), w = await who(x); return { kind: "Comment", date: toDate(x.createdAt), ...w, text: pick(x, ["text", "comment", "content"]), media: "" }; })),
+      ...md.map(d => { const x = d.data(); return { kind: "Joined", date: toDate(x.createdAt), name: uName(x), photo: uPhoto(x), text: x.email || "New member", media: "" }; })
+    ].sort((a, b) => (b.date || 0) - (a.date || 0));
+    if (!alive()) return;
+    const shown = 5;
+    const rowHtml = e => `<div class="row">${e.media && !isVideo(e.media) ? `<img class="thumb" src="${esc(e.media)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : avatar(e.name, e.photo, "sm")}<div class="body"><b>${esc(e.name)}<span class="pill ${e.kind === "Post" ? "" : e.kind === "Comment" ? "warn" : "ok"}">${e.kind}</span></b><div class="s">${esc(e.text)}</div><div class="m">${fmt(e.date)}</div></div></div>`;
+    const paintAct = () => {
+      $("#ra", root).innerHTML = ev.length ? ev.slice(0, shown).map(rowHtml).join("") : stateHtml("search", "No activity yet", "New posts, comments and members will appear here.");
+    };
+    paintAct();
+  } catch (e) { $("#ra", root).innerHTML = stateHtml("alert", "Could not load activity", errText(e), true); }
+  try {
+    const [ps, us] = await Promise.all([pageDocs(collection(db, "posts"), "createdAt", null, 200), pageDocs(collection(db, "users"), "createdAt", null, 200)]); if (!alive()) return;
+    const key = d => d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate();
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (6 - i)); return { d, k: key(d), p: 0, m: 0 }; });
+    const bump = (docs, f) => docs.forEach(x => { const t = toDate(x.data().createdAt); const day = t && days.find(v => v.k === key(t)); if (day) day[f]++; });
+    bump(ps, "p"); bump(us, "m");
+    const mx = Math.max(1, ...days.map(d => Math.max(d.p, d.m)));
+    $("#wk", root).innerHTML = `<div class="wk">${days.map(d => `<div class="d"><div class="pair"><div class="b p" style="height:0" data-h="${Math.round(d.p / mx * 100)}" title="${d.p} posts"></div><div class="b m" style="height:0" data-h="${Math.round(d.m / mx * 100)}" title="${d.m} new members"></div></div>${d.d.toLocaleDateString([], { weekday: "short" })}</div>`).join("")}</div><div class="legend"><span><i style="background:var(--p2)"></i>Posts ${days.reduce((a, d) => a + d.p, 0)}</span><span><i style="background:var(--pink)"></i>New members ${days.reduce((a, d) => a + d.m, 0)}</span></div><p class="note">Counted from your 200 newest posts and members.</p>`;
+    requestAnimationFrame(() => root.querySelectorAll("#wk [data-h]").forEach(b => b.style.height = b.dataset.h + "%"));
+  } catch (e) { $("#wk", root).innerHTML = stateHtml("alert", "Could not load chart", errText(e)); }
+};
+
+/* Members */
+views.members = listView({
+  title: "Members", sub: "Search and manage registered members.", tools: `<button class="btn ghost sm" id="expCsv">${ic("download")} Export CSV</button>`, setup: (root, items) => { $("#expCsv", root).onclick = () => { const rows = items(); if (!rows.length) return toast("warning", "Nothing to export yet."); const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`; const csv = ["Name,Email,Mobile,UID,Joined", ...rows.map(u => [uName(u), u.email, pick(u, ["mobile", "phone", "phoneNumber"]), u.id, fmt(u.createdAt)].map(q).join(","))].join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "members.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast("success", `Exported ${rows.length} members`); }; }, ph: "Search name, email, mobile or UID", empty: "No members found",
+  fetch: c => pageDocs(collection(db, "users"), "createdAt", c),
+  byId: async id => { const s = await getDoc(doc(db, "users", id)).catch(() => null); return s?.exists() ? { id: s.id, ref: s.ref, ...s.data() } : null; },
+  text: u => [uName(u), u.email, pick(u, ["mobile", "phone", "phoneNumber"]), u.id].join(" "),
+  row: u => `<div class="row">${avatar(uName(u), uPhoto(u))}<div class="body"><b>${esc(uName(u))}${u.suspended || u.isBlocked === true || u.active === false || u.status === "suspended" ? '<span class="pill bad">Suspended</span>' : ""}</b><div class="s">${esc([u.email, pick(u, ["mobile", "phone", "phoneNumber"])].filter(Boolean).join(" • ") || "No contact details")}</div><div class="m">Joined ${fmt(u.createdAt)} • ${esc(u.id)}</div></div><div class="acts">${act("view", u.id, "View member", "eye", "ghost", "")}${act("del", u.id, "Delete member", "trash", "danger", "br")}</div></div>`,
+  act(a, u, ctl) {
+    if (a === "view") return modal({ title: "Member", wide: true, full: true, html: `<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${avatar(uName(u), uPhoto(u), "lg")}<div><h3>${esc(uName(u))}</h3><div style="color:var(--tx2)">${esc(u.email || "")}</div></div></div>${kv([["UID", u.id], ...primitives(u).filter(([k]) => k !== "id")])}`, actions: [{ label: "Close", kind: "primary" }] });
+    if (u.id === me.uid) return notice("This is your account", "You cannot delete the administrator account you are signed in with.");
+    confirmDialog({ title: "Delete this member permanently?", name: uName(u), label: "Delete member",
+      text: "This permanently deletes the member's sign-in account and profile. It cannot be undone. A trusted Cloud Function performs the deletion, so it must be deployed first.",
+      run: async () => { await httpsCallable(fns, "adminDeleteMember")({ uid: u.id }); userCache.delete(u.id); } })
+      .then(ok => { if (ok) { toast("success", "Member deleted"); ctl.remove(u.id); } });
+  }
+});
+
+/* Posts */
+const postMedia = p => pick(p, ["mediaURL", "imageUrl", "image", "mediaUrl", "photoURL", "photo", "videoUrl", "video", "url"]);
+async function postCounts(p) { const c = async n => { try { return (await getCountFromServer(collection(db, "posts", p.id, n))).data().count; } catch (e) { return null; } }; return { likes: await c("likes"), comments: await c("comments") }; }
+function viewPost(p) {
+  const url = postMedia(p);
+  const m = modal({ title: "Post", wide: true, full: true, html: `${url ? (isVideo(url) || p.mediaType === "video" ? `<video class="media" src="${esc(url)}" controls playsinline></video>` : `<img class="media" src="${esc(url)}" alt="Post media" referrerpolicy="no-referrer">`) : ""}<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">${avatar(p._name, p._photo, "sm")}<b>${esc(p._name)}</b></div><p style="white-space:pre-wrap;margin-bottom:12px">${esc(pick(p, ["caption", "text", "content"]) || "No caption")}</p><div id="pc" class="note">Counting likes and comments…</div><div style="margin-top:10px">${kv([["Post ID", p.id], ["Created", fmt(p.createdAt)]])}</div>`,
+    actions: [{ label: "View comments", run: async () => { setTimeout(() => postComments(p), 0); } }, { label: "Close", kind: "primary" }] });
+  postCounts(p).then(c => { const el = $("#pc", m.el); if (el) el.innerHTML = `<b>${num(c.likes)}</b> likes • <b>${num(c.comments)}</b> comments`; });
+}
+async function postComments(p) {
+  const m = modal({ title: "Comments", wide: true, html: skeleton(3, 56), actions: [{ label: "Close", kind: "primary" }] });
+  const render = async () => {
+    try {
+      const docs = await pageDocs(collection(db, "posts", p.id, "comments"), "createdAt", null, 50);
+      const rows = await Promise.all(docs.map(async d => { const x = d.data(); const au = await getUser(pick(x, ["authorId", "uid", "userId"])); const nm = pick(x, ["fullName", "authorName", "userName", "name"]) || uName(au); return `<div class="row">${avatar(nm, uPhoto(au), "sm")}<div class="body"><b>${esc(nm)}</b><div class="s">${esc(pick(x, ["text", "comment", "content"]))}</div><div class="m">${fmt(x.createdAt)} • ${esc(d.id)}</div></div><div class="acts"><button class="btn danger sm corner br" data-cd="${esc(d.id)}" aria-label="Delete comment">${ic("trash")}</button></div></div>`; }));
+      $(".mbody", m.el).innerHTML = rows.join("") || stateHtml("msg", "No comments on this post", "");
+    } catch (e) { $(".mbody", m.el).innerHTML = stateHtml("alert", "Could not load comments", errText(e)); }
+  };
+  m.body.addEventListener("click", e => { const id = e.target.closest("[data-cd]")?.dataset.cd; if (id) deleteComment(p.id, id, "").then(ok => ok && render()); });
+  render();
+}
+function deleteComment(postId, id, text) {
+  return confirmDialog({ title: "Delete this comment?", name: text || id, label: "Delete comment", text: "The comment is removed permanently from the post.", run: async () => { await deleteDoc(doc(db, "posts", postId, "comments", id)); } })
+    .then(ok => { if (ok) toast("success", "Comment deleted"); return ok; });
+}
+views.posts = listView({
+  title: "Posts", sub: "Review and remove community posts.", ph: "Search caption, author or post ID", empty: "No posts yet",
+  fetch: c => pageDocs(collection(db, "posts"), "createdAt", c),
+  enrich: async p => { const au = await getUser(pick(p, ["authorId", "uid", "userId"])); p._name = pick(p, ["fullName", "authorName", "userName", "name"]) || uName(au); p._photo = pick(p, ["authorPhoto", "userPhoto"]) || uPhoto(au); },
+  text: p => [p._name, pick(p, ["caption", "text", "content"]), p.id].join(" "),
+  row: p => { const u = postMedia(p); return `<div class="row">${u && !isVideo(u) ? `<img class="thumb" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : u ? `<span class="thumb" data-video="${esc(u)}" style="display:grid;place-items:center">${ic("image")}</span>` : avatar(p._name, p._photo)}<div class="body"><b>${esc(p._name)}</b><div class="s">${esc(pick(p, ["caption", "text", "content"]) || "No caption")}</div><div class="m" data-counts="${esc(p.id)}">${fmt(p.createdAt)} • ${esc(p.id)}</div></div><div class="acts">${act("view", p.id, "View post", "eye", "ghost", "")}${act("cm", p.id, "Comments", "msg", "ghost", "")}${act("del", p.id, "Delete post", "trash", "danger", "br")}</div></div>`; },
+  after: (list, items) => items.forEach(async p => { if (p._c) return paintC(list, p); p._c = await postCounts(p); paintC(list, p); }),
+  act(a, p, ctl) {
+    if (a === "view") return viewPost(p);
+    if (a === "cm") return postComments(p);
+    confirmDialog({ title: "Delete this post?", name: pick(p, ["caption", "text", "content"]).slice(0, 80) || `Post ${p.id}`, label: "Delete post",
+      text: "The post and all of its comments and likes are permanently removed. This cannot be undone.",
+      run: async () => { await delAll(collection(db, "posts", p.id, "comments")); await delAll(collection(db, "posts", p.id, "likes")); await deleteDoc(doc(db, "posts", p.id)); } })
+      .then(ok => { if (ok) { toast("success", "Post and related data deleted"); ctl.remove(p.id); } });
+  }
+});
+function paintC(list, p) { const el = list.querySelector(`[data-counts="${CSS.escape(p.id)}"]`); if (el && p._c) el.textContent = `${fmt(p.createdAt)} • ${num(p._c.likes)} likes • ${num(p._c.comments)} comments • ${p.id}`; }
+
+/* Comments */
+views.comments = async (root, alive) => {
+  let viaCG = true;
+  const base = listView({
+    title: "Comments", sub: "Comments from every post.", ph: "Search comment, author or post", empty: "No comments yet", err: "Could not load comments",
+    fetch: async c => {
+      try { return await pageDocs(collectionGroup(db, "comments"), "createdAt", c, 20); }
+      catch (e) {
+        if (c) return [];
+        viaCG = false; const out = [];
+        const posts = await pageDocs(collection(db, "posts"), "createdAt", null, 25);
+        for (const pd of posts) { try { const cs = await getDocs(query(collection(db, "posts", pd.id, "comments"), limit(20))); out.push(...cs.docs); } catch (x) {} }
+        return out;
+      }
+    },
+    size: 20,
+    enrich: async x => { x._post = x.ref.parent.parent?.id || ""; const au = await getUser(pick(x, ["authorId", "uid", "userId"])); x._name = pick(x, ["fullName", "authorName", "userName", "name"]) || uName(au); x._photo = uPhoto(au);
+      try { const s = await getDoc(doc(db, "posts", x._post)); x._cap = s.exists() ? pick(s.data(), ["caption", "text", "content"]) : ""; } catch (e) { x._cap = ""; } },
+    text: x => [x._name, pick(x, ["text", "comment", "content"]), x._cap, x._post, x.id].join(" "),
+    row: x => `<div class="row">${avatar(x._name, x._photo, "sm")}<div class="body"><b>${esc(x._name)}</b><div class="s">${esc(pick(x, ["text", "comment", "content"]))}</div><div class="m">On: ${esc((x._cap || "post").slice(0, 60))} • ${fmt(x.createdAt)}<br>Post ${esc(x._post)} • Comment ${esc(x.id)}</div></div><div class="acts">${act("post", x.id, "Open post", "eye", "ghost", "")}${act("del", x.id, "Delete comment", "trash", "danger", "br")}</div></div>`,
+    async act(a, x, ctl) {
+      if (a === "post") { const s = await getDoc(doc(db, "posts", x._post)).catch(() => null); if (!s?.exists()) return notice("Post not found", "The parent post no longer exists."); const p = { id: s.id, ref: s.ref, ...s.data() }; await views_enrichPost(p); return viewPost(p); }
+      deleteComment(x._post, x.id, pick(x, ["text", "comment", "content"]).slice(0, 80)).then(ok => ok && ctl.remove(x.id));
+    }
+  });
+  await base(root, alive);
+  if (!viaCG && alive()) root.querySelector(".page-head p").textContent = "Showing comments from the 25 newest posts (a collection-group read was not available).";
+};
+async function views_enrichPost(p) { const au = await getUser(pick(p, ["authorId", "uid", "userId"])); p._name = pick(p, ["fullName", "authorName", "userName", "name"]) || uName(au); p._photo = uPhoto(au); }
+
+/* Groups */
+const GROUP_PHOTO = g => pick(g, ["groupPhoto", "photo", "photoURL"]);
+async function groupParticipants(g) { return Promise.all((g.participants || []).map(async id => { const u = await getUser(id); return { id, u }; })); }
+views.groups = async (root, alive) => {
+  root.innerHTML = head("Groups", "Create and manage group chats.", `<button class="btn primary sm" id="newG">${ic("plus")} Create group</button>${refreshBtn}`) + `<div class="tools" style="margin-bottom:14px"><label class="search">${ic("search")}<input id="q" type="search" placeholder="Search groups" aria-label="Search groups"></label></div><div id="list">${skeleton()}</div>`;
+  let items = []; const list = $("#list", root);
+  $("#newG", root).onclick = createGroup;
+  const paint = () => { const q = $("#q", root).value.trim().toLowerCase(); const f = items.filter(g => !q || [g.name, g.description, g.id].join(" ").toLowerCase().includes(q));
+    list.innerHTML = f.length ? f.map(g => `<div class="row">${avatar(g.name || "Group", GROUP_PHOTO(g))}<div class="body"><b>${esc(g.name || "Untitled group")}<span class="pill">${(g.participants || []).length} members</span></b><div class="s">${esc(g.description || "No description")}</div><div class="m">Created ${fmt(g.createdAt)} • ${esc(g.id)}</div></div><div class="acts">${act("view", g.id, "Details", "eye")}${act("edit", g.id, "Edit group", "edit", "ghost", "tr")}${act("ppl", g.id, "Participants", "users")}${act("del", g.id, "Delete group", "trash", "danger", "br")}</div></div>`).join("") : stateHtml("layers", items.length ? "No matches" : "No groups yet", items.length ? "" : "Create the first group for your community."); };
+  $("#q", root).oninput = paint;
+  try {
+    const s = await getDocs(query(collection(db, "chats"), where("type", "==", "group"), limit(200))); if (!alive()) return;
+    items = s.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() })).sort((a, b) => (toDate(b.updatedAt || b.createdAt) || 0) - (toDate(a.updatedAt || a.createdAt) || 0)); paint();
+  } catch (e) { list.innerHTML = stateHtml("alert", "Could not load groups", errText(e), true); return; }
+  list.onclick = async e => { const b = e.target.closest("[data-act]"); if (!b) return; const g = items.find(x => x.id === b.dataset.id); if (!g) return;
+    if (b.dataset.act === "edit") return editGroup(g, () => reload());
+    if (b.dataset.act === "view") return modal({ title: "Group details", wide: true, html: `<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">${avatar(g.name, GROUP_PHOTO(g), "lg")}<div><h3>${esc(g.name)}</h3><div style="color:var(--tx2)">${esc(g.description || "No description")}</div></div></div>${kv([["Group ID", g.id], ["Members", (g.participants || []).length], ["Created by", uName(await getUser(g.createdBy))], ["Created", fmt(g.createdAt)], ["Updated", fmt(g.updatedAt)]])}`, actions: [{ label: "Close", kind: "primary" }] });
+    if (b.dataset.act === "ppl") { const m = modal({ title: `Participants (${(g.participants || []).length})`, html: skeleton(3, 52), actions: [{ label: "Close", kind: "primary" }] }); const ps = await groupParticipants(g); $(".mbody", m.el).innerHTML = ps.map(({ id, u }) => `<div class="row">${avatar(uName(u), uPhoto(u), "sm")}<div class="body"><b>${esc(u ? uName(u) : "Unknown member")}${id === g.createdBy ? '<span class="pill">Creator</span>' : ""}</b><div class="m">${esc(id)}</div></div></div>`).join("") || stateHtml("users", "No participants", ""); return; }
+    confirmDialog({ title: "Delete this group?", name: g.name || g.id, label: "Delete group", text: "The group and every message inside it are permanently removed for all participants. This cannot be undone.",
+      run: async () => { await delAll(collection(db, "chats", g.id, "messages")); await deleteDoc(doc(db, "chats", g.id)); } })
+      .then(ok => { if (ok) { toast("success", "Group deleted"); items = items.filter(x => x.id !== g.id); paint(); } });
+  };
+};
+function memberPicker(sel, exclude = []) {
+  const node = document.createElement("div"); let users = [];
+  node.innerHTML = `<label class="lbl">Members <b class="mpCount" style="color:var(--p2)"></b></label><input class="inp mpSearch" type="search" placeholder="Search members" aria-label="Search members"><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn ghost sm" data-all>Select shown</button><button type="button" class="btn ghost sm" data-none>Clear</button></div><div class="pick mpList" style="margin-top:8px">${skeleton(3, 44)}</div>`;
+  const count = () => { $(".mpCount", node).textContent = `(${sel.size} selected)`; }; count();
+  const shown = () => { const q = $(".mpSearch", node).value.trim().toLowerCase(); return users.filter(u => !exclude.includes(u.id) && (!q || [uName(u), u.email, u.id].join(" ").toLowerCase().includes(q))); };
+  const paint = () => { $(".mpList", node).innerHTML = shown().map(u => `<label class="chk"><input type="checkbox" data-u="${esc(u.id)}" ${sel.has(u.id) ? "checked" : ""}>${avatar(uName(u), uPhoto(u), "sm")}<span style="min-width:0"><b style="display:block">${esc(uName(u))}</b><small style="color:var(--tx2)">${esc(u.email || "")}</small></span></label>`).join("") || `<p class="note" style="padding:12px">No members found.</p>`; };
+  getDocs(query(collection(db, "users"), limit(300))).then(s => { users = s.docs.map(d => ({ id: d.id, ...d.data() })); paint(); }).catch(e => { $(".mpList", node).innerHTML = `<p class="note" style="padding:12px">${esc(errText(e))}</p>`; });
+  node.addEventListener("input", e => { if (e.target.classList.contains("mpSearch")) paint(); });
+  node.addEventListener("change", e => { const id = e.target.dataset?.u; if (!id) return; e.target.checked ? sel.add(id) : sel.delete(id); count(); });
+  $("[data-all]", node).onclick = () => { shown().forEach(u => sel.add(u.id)); paint(); count(); };
+  $("[data-none]", node).onclick = () => { sel.clear(); paint(); count(); };
+  return { node };
+}
+async function createGroup() {
+  const n = document.createElement("div");
+  n.innerHTML = `<label class="lbl" for="gName">Group name *</label><input class="inp" id="gName" maxlength="60"><label class="lbl" for="gDesc">Description</label><textarea class="inp" id="gDesc" maxlength="240"></textarea><div id="gPhotoSlot" style="margin-top:14px"></div><div id="gPick"></div><p class="note">You are added to the group automatically.</p>`;
+  const gp = photoPicker("Group", ""); $("#gPhotoSlot", n).appendChild(gp.node);
+  const sel = new Set(); $("#gPick", n).appendChild(memberPicker(sel, [me.uid]).node);
+  let dirty = false; n.addEventListener("input", () => { dirty = true; });
+  modal({ title: "Create group", node: n, wide: true, beforeClose: () => !dirty ? true : confirmDialog({ title: "Discard this group?", text: "The group has not been created yet.", label: "Discard", run: async () => {} }),
+    actions: [{ label: "Cancel" }, { label: "Create group", kind: "primary", run: async () => {
+      const name = $("#gName", n).value.trim(); if (!name) throw new Error("Enter a group name.");
+      if (!sel.size) throw new Error("Select at least one member.");
+      const photo = await gp.resolve("");
+      await addDoc(collection(db, "chats"), { type: "group", name, description: $("#gDesc", n).value.trim(), groupPhoto: photo, participants: [me.uid, ...sel], createdBy: me.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      dirty = false; toast("success", "Group created"); if (location.hash === "#groups") reload();
+    } }] });
+}
+function editGroup(g, done) {
+  const owner = g.createdBy || me.uid, startPhoto = GROUP_PHOTO(g);
+  const n = document.createElement("div");
+  n.innerHTML = `<div id="gPhotoSlot"></div><label class="lbl" for="gName">Group name *</label><input class="inp" id="gName" maxlength="60" value="${esc(g.name || "")}"><label class="lbl" for="gDesc">Description</label><textarea class="inp" id="gDesc" maxlength="240">${esc(g.description || "")}</textarea><div id="gPick"></div><p class="note">The group creator always stays in the group.</p>`;
+  const gp = photoPicker(g.name || "Group", startPhoto); $("#gPhotoSlot", n).appendChild(gp.node);
+  const sel = new Set((g.participants || []).filter(x => x !== owner)); $("#gPick", n).appendChild(memberPicker(sel, [owner]).node);
+  let dirty = false; n.addEventListener("input", () => { dirty = true; });
+  modal({ title: "Edit group", node: n, wide: true, beforeClose: () => !dirty && !gp.changed() ? true : confirmDialog({ title: "Discard changes?", text: "Your group changes have not been saved.", label: "Discard", run: async () => {} }),
+    actions: [{ label: "Cancel" }, { label: "Save changes", kind: "primary", run: async () => {
+      const name = $("#gName", n).value.trim(); if (!name) throw new Error("Enter a group name.");
+      if (!sel.size) throw new Error("A group needs at least one member besides its creator.");
+      const photo = await gp.resolve(startPhoto);
+      await updateDoc(doc(db, "chats", g.id), { name, description: $("#gDesc", n).value.trim(), groupPhoto: photo, participants: [owner, ...sel], updatedAt: serverTimestamp() });
+      dirty = false; toast("success", "Group updated"); done?.();
+    } }] });
+}
+/* Chats (overview only) */
+views.chats = listView({
+  title: "Chats", sub: "Overview of conversations. Message contents are not shown here.", ph: "Search by name, participant or ID", empty: "No conversations yet",
+  fetch: c => pageDocs(collection(db, "chats"), "updatedAt", c, 20),
+  enrich: async ch => { ch._people = await Promise.all((ch.participants || []).slice(0, 6).map(async id => uName(await getUser(id)))); ch._title = ch.type === "group" ? (ch.name || "Untitled group") : (ch._people.join(" & ") || "Direct chat"); },
+  text: ch => [ch._title, ch._people.join(" "), ch.id].join(" "),
+  row: ch => `<div class="row">${avatar(ch._title, ch.type === "group" ? GROUP_PHOTO(ch) : "")}<div class="body"><b>${esc(ch._title)}<span class="pill">${ch.type === "group" ? "Group" : "Direct"}</span></b><div class="s">${(ch.participants || []).length} participants • ${esc(ch._people.join(", "))}</div><div class="m">Last activity ${fmt(ch.updatedAt || ch.createdAt)} • ${esc(ch.id)}</div></div><div class="acts">${act("view", ch.id, "Details", "eye")}</div></div>`,
+  act(a, ch) { modal({ title: "Conversation", wide: true, html: kv([["Type", ch.type || "direct"], ["Participants", ch._people.join(", ")], ["Created", fmt(ch.createdAt)], ["Last activity", fmt(ch.updatedAt)], ["Chat ID", ch.id]]) + `<p class="note">Admins can delete groups from the Groups page. Direct conversations are read-only here.</p>`, actions: [{ label: "Close", kind: "primary" }] }); }
+});
+
+/* Reports */
+views.reports = listView({
+  title: "Reports", sub: "Reports submitted by members.", ph: "Search reason, details or reporter", empty: "No reports", emptySub: "Nothing has been reported, or the collection does not exist yet.",
+  fetch: c => pageDocs(collection(db, "reports"), "createdAt", c),
+  enrich: async r => { r._by = uName(await getUser(pick(r, ["uid", "reporterId", "reportedBy"]))); },
+  text: r => [pick(r, ["reason"]), pick(r, ["description", "details", "message"]), r._by, r.id].join(" "),
+  row: r => `<div class="row"><div class="av">${ic("flag")}</div><div class="body"><b>${esc(pick(r, ["reason", "type"]) || "Report")}${r.status ? `<span class="pill ${r.status === "pending" ? "warn" : "ok"}">${esc(r.status)}</span>` : ""}</b><div class="s">${esc(pick(r, ["description", "details", "message"]) || "No description")}</div><div class="m">By ${esc(r._by)} • ${fmt(r.createdAt)} • ${esc(r.id)}</div></div><div class="acts">${act("view", r.id, "View report", "eye")}${"status" in r && r.status !== "reviewed" ? act("rev", r.id, "Mark reviewed", "check") : ""}${act("del", r.id, "Delete report", "trash", "danger")}</div></div>`,
+  act(a, r, ctl) {
+    if (a === "view") return modal({ title: "Report", wide: true, html: kv([["Reporter", r._by], ...primitives(r).filter(([k]) => k !== "id")]), actions: [{ label: "Close", kind: "primary" }] });
+    if (a === "rev") return modal({ title: "Mark as reviewed?", html: '<p style="color:var(--tx2)">The report status will change to “reviewed”.</p>', actions: [{ label: "Cancel" }, { label: "Mark reviewed", kind: "primary", run: async () => { await updateDoc(r.ref, { status: "reviewed" }); r.status = "reviewed"; toast("success", "Report marked reviewed"); ctl.repaint(); } }] });
+    confirmDialog({ title: "Delete this report?", name: pick(r, ["reason"]) || r.id, label: "Delete report", text: "The report is permanently removed.", run: async () => { await deleteDoc(r.ref); } }).then(ok => { if (ok) { toast("success", "Report deleted"); ctl.remove(r.id); } });
+  }
+});
+
+/* Announcement (bulk notification) */
+async function announceDialog() {
+  const n = document.createElement("div"); let mode = "all"; const sel = new Set();
+  n.innerHTML = `<label class="lbl" for="anT">Title</label><input class="inp" id="anT" maxlength="80" placeholder="e.g. New feature available"><label class="lbl" for="anM">Message</label><textarea class="inp" id="anM" maxlength="300" placeholder="Write your announcement"></textarea><label class="lbl">Send to</label><div class="seg2"><button type="button" data-m="all" class="on">All members</button><button type="button" data-m="sel">Selected members</button></div><div id="anPick" class="hide"></div><p class="note" id="anNote">Every member will receive this notification.</p>`;
+  const mp = memberPicker(sel); $("#anPick", n).appendChild(mp.node);
+  n.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; n.querySelectorAll("[data-m]").forEach(x => x.classList.toggle("on", x === b)); $("#anPick", n).classList.toggle("hide", mode !== "sel"); $("#anNote", n).textContent = mode === "all" ? "Every member will receive this notification." : "Only the members you select will receive it."; });
+  modal({ title: "Send announcement", node: n, wide: true, actions: [{ label: "Cancel" }, { label: "Send", kind: "primary", run: async () => {
+    const title = $("#anT", n).value.trim(), message = $("#anM", n).value.trim();
+    if (!title) throw new Error("Enter a title."); if (!message) throw new Error("Enter a message.");
+    let ids = [...sel];
+    if (mode === "all") ids = (await getDocs(query(collection(db, "users"), limit(2000)))).docs.map(d => d.id);
+    if (!ids.length) throw new Error("Select at least one member.");
+    for (let i = 0; i < ids.length; i += 400) {
+      const b = writeBatch(db);
+      ids.slice(i, i + 400).forEach(uid => b.set(doc(collection(db, "notifications")), { recipientId: uid, title, message, type: "announcement", read: false, createdAt: serverTimestamp(), from: me.uid }));
+      await b.commit();
+    }
+    toast("success", `Announcement sent to ${ids.length} member${ids.length === 1 ? "" : "s"}`); if (location.hash === "#notifications") reload();
+  } }] });
+}
+
+/* Notifications */
+views.notifications = listView({
+  title: "Notifications", sub: "Notifications sent to members.", tools: `<button class="btn primary sm" id="sendAnn">${ic("send")} Send announcement</button>`, setup: root => { $("#sendAnn", root).onclick = announceDialog; }, ph: "Search title, message or recipient", empty: "No notifications", emptySub: "Nothing found, or the collection does not exist yet.",
+  fetch: c => pageDocs(collection(db, "notifications"), "createdAt", c),
+  enrich: async n => { n._to = uName(await getUser(n.recipientId)); },
+  text: n => [n.title, n.message, n._to, n.id].join(" "),
+  row: n => `<div class="row"><div class="av">${ic("bell")}</div><div class="body"><b>${esc(n.title || "Notification")}${n.read === false ? '<span class="pill warn">Unread</span>' : ""}</b><div class="s">${esc(n.message || "")}</div><div class="m">To ${esc(n._to)} • ${fmt(n.createdAt)} • ${esc(n.id)}</div></div><div class="acts">${act("del", n.id, "Delete notification", "trash", "danger")}</div></div>`,
+  act(a, n, ctl) { confirmDialog({ title: "Delete this notification?", name: n.title || n.id, label: "Delete notification", text: "It is permanently removed from the recipient's notifications.", run: async () => { await deleteDoc(n.ref); } }).then(ok => { if (ok) { toast("success", "Notification deleted"); ctl.remove(n.id); } }); }
+});
+
+/* Settings */
+const APP_VERSION = "2.2";
+const PREF_DEFAULT = { accent: "purple", density: "comfortable", fs: "md", motion: "on", idle: "0" };
+const getPref = k => { try { return localStorage.getItem("pc-" + k) || PREF_DEFAULT[k]; } catch (e) { return PREF_DEFAULT[k]; } };
+function setPref(k, v) { try { localStorage.setItem("pc-" + k, v); } catch (e) {} if (k === "idle") armIdle(); else document.documentElement.setAttribute("data-" + k, v); }
+const ACCENTS = [["purple", "#A855F7"], ["blue", "#38BDF8"], ["pink", "#F472B6"], ["emerald", "#34D399"], ["orange", "#FB923C"]];
+const shortDate = t => { const d = t ? new Date(t) : null; return d && !isNaN(d) ? d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—"; };
+
+/* My profile page */
+views.profile = async root => {
+  let mine = null;
+  try { mine = (await getCountFromServer(query(collection(db, "posts"), where("uid", "==", me.uid)))).data().count; } catch (e) {}
+  const role = pick(adminDoc, ["role"]) || "Admin";
+  root.innerHTML = `<div class="card hello" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><span class="sh"></span>${avatar(adminName(), adminPhoto(), "lg")}<div style="min-width:0;position:relative"><h1>${esc(adminName())}</h1><p style="margin:2px 0 8px;word-break:break-all">${esc(me.email)}</p><span class="badge" style="background:rgba(255,255,255,.25);color:#fff">${esc(role)}</span></div></div>
+  <div class="grid stats" style="margin-bottom:14px">
+    <div class="card stat"><div class="ico">${ic("image")}</div><b>${num(mine)}</b><span>Posts by you</span></div>
+    <div class="card stat"><div class="ico">${ic("user")}</div><b style="font-size:17px;padding-top:6px">${esc(shortDate(me.metadata?.creationTime).split(",").slice(0, 2).join(","))}</b><span>Account created</span></div>
+    <div class="card stat"><div class="ico">${ic("lock")}</div><b style="font-size:17px;padding-top:6px">${me.emailVerified ? "Verified" : "Not verified"}</b><span>Email status</span></div>
+  </div>
+  <div class="grid two"><div class="card"><h2>Account</h2>${kv([["Name", adminName()], ["Email", me.email], ["Role", role], ["Status", adminDoc?.active === true ? "Active admin" : "Inactive"], ["Last sign-in", shortDate(me.metadata?.lastSignInTime)], ["UID", me.uid]])}<button class="btn ghost sm" id="pCopy" style="margin-top:12px">Copy UID</button></div>
+  <div class="card"><h2>Manage</h2><div style="display:grid;gap:10px"><button class="btn ghost" id="pEdit">${ic("edit")} Edit name and photo</button><button class="btn ghost" id="pPw">${ic("lock")} Change password</button><a class="btn ghost" href="#settings">${ic("settings")} Open settings</a><button class="btn danger" id="pOut">${ic("logout")} Sign out</button></div><p class="note">Tap your photo to view it full screen.</p></div></div>`;
+  $("#pEdit", root).onclick = editProfile; $("#pPw", root).onclick = passwordDialog; $("#pOut", root).onclick = signOutDialog;
+  $("#pCopy", root).onclick = async () => { try { await navigator.clipboard.writeText(me.uid); toast("success", "UID copied"); } catch (e) { toast("info", me.uid); } };
+};
+
+/* Settings */
+views.settings = async root => {
+  const pref = document.documentElement.getAttribute("data-pref") || "system";
+  const seg = (k, opts, cur, cls = "seg") => `<div class="${cls}" data-pref="${k}">${opts.map(([v, l]) => `<button type="button" data-v="${v}" class="${cur === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  const md = me.metadata || {};
+  root.innerHTML = head("Settings", "Personalize the panel and manage your account security.") + `<div class="grid two">
+  <div class="card"><h2>Admin profile</h2><div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${avatar(adminName(), adminPhoto(), "lg")}<div style="min-width:0"><b>${esc(adminName())}</b><div style="color:var(--tx2);word-break:break-all">${esc(me.email)}</div><span class="badge">${esc(pick(adminDoc, ["role"]) || "Admin")}</span></div></div><div style="display:grid;gap:10px"><a class="btn ghost" href="#profile">${ic("user")} Open my profile</a><button class="btn ghost" id="sEdit">${ic("edit")} Edit name and photo</button></div></div>
+  <div class="card"><h2>Appearance</h2>
+    <label class="lbl" style="margin-top:0">Theme Colors</label>${seg("theme", [["dark", "Dark purple"], ["light", "Light"], ["system", "System"]], pref)}
+    <label class="lbl">Accent color</label><div class="swatches" data-pref="accent">${ACCENTS.map(([v, c]) => `<button type="button" data-v="${v}" class="${getPref("accent") === v ? "on" : ""}" style="background:${c}" aria-label="${v} accent"></button>`).join("")}</div>
+    <label class="lbl">Text size</label>${seg("fs", [["sm", "Small"], ["md", "Medium"], ["lg", "Large"]], getPref("fs"))}
+    <label class="lbl">Layout density</label>${seg("density", [["comfortable", "Comfortable"], ["compact", "Compact"]], getPref("density"), "seg2")}
+    <label class="lbl">Animations</label>${seg("motion", [["on", "On"], ["off", "Reduced"]], getPref("motion"), "seg2")}
+    <p class="note">Saved on this device and applied instantly.</p></div>
+  <div class="card"><h2>Security</h2>${kv([["Signed in as", me.email], ["Email verified", me.emailVerified ? "Yes" : "No"], ["Account created", shortDate(md.creationTime)], ["Last sign-in", shortDate(md.lastSignInTime)]])}
+    <label class="lbl">Auto sign-out when idle</label>${seg("idle", [["0", "Off"], ["15", "15 min"], ["30", "30 min"], ["60", "1 hour"]], getPref("idle"), "seg4")}
+    <div style="display:grid;gap:10px;margin-top:14px"><button class="btn ghost" id="sPw">${ic("lock")} Change password</button><button class="btn ghost" id="sReset">${ic("mail")} Email me a reset link</button><button class="btn danger" id="sOut">${ic("logout")} Sign out</button></div>
+    <p class="note">Signing out ends this browser's session only. Other devices stay signed in until they sign out.</p></div>
+  <div class="card"><h2>Data and store</h2><div style="display:grid;gap:10px"><button class="btn ghost" id="sCache">${ic("refresh")} Refresh cached member data</button><button class="btn ghost" id="sReset2">${ic("trash")} Reset appearance to defaults</button></div><p class="note">These only affect this browser. Nothing in your database is changed.</p></div>
+  <div class="card"><h2>About</h2>${kv([["Panel version", APP_VERSION], ["Project", firebaseConfig.projectId], ["Role", pick(adminDoc, ["role"]) || "Admin"], ["Connection", navigator.onLine ? "Online" : "Offline"]])}</div></div>`;
+  root.addEventListener("click", e => {
+    const b = e.target.closest("[data-pref] [data-v]"); if (!b) return;
+    const k = b.closest("[data-pref]").dataset.pref, v = b.dataset.v;
+    k === "theme" ? applyTheme(v) : setPref(k, v);
+    b.closest("[data-pref]").querySelectorAll("[data-v]").forEach(x => x.classList.toggle("on", x === b));
+    toast("success", k === "idle" ? (v === "0" ? "Auto sign-out is off" : `You will be signed out after ${v} minutes idle`) : "Saved");
+  });
+  $("#sEdit", root).onclick = editProfile; $("#sPw", root).onclick = passwordDialog; $("#sOut", root).onclick = signOutDialog;
+  $("#sReset", root).onclick = async () => { try { await sendPasswordResetEmail(auth, me.email); toast("success", "Reset link sent to " + me.email); } catch (e) { toast("error", errText(e)); } };
+  $("#sCache", root).onclick = () => { userCache.clear(); toast("success", "Cached data cleared"); };
+  $("#sReset2", root).onclick = () => { ["accent", "density", "fs", "motion"].forEach(k => { try { localStorage.getItem("pc-" + k); localStorage.removeItem("pc-" + k); } catch (e) {} document.documentElement.removeAttribute("data-" + k); }); applyTheme("system"); toast("success", "Appearance reset"); route(); };
+};
+
+function openViewer(src, video = false) {
+  const v = document.createElement("div"); v.className = "viewer"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "Full screen view");
+  v.innerHTML = `<button class="vx" aria-label="Close full screen view">${ic("x")}</button>` + (video ? `<video src="${esc(src)}" controls autoplay playsinline></video>` : `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`);
+  const api = { dismissible: true, busy: false, close() { const i = stack.indexOf(api); if (i > -1) stack.splice(i, 1); v.remove(); } };
+  v.addEventListener("click", e => { if (e.target === v || e.target.closest(".vx")) api.close(); });
+  document.body.appendChild(v); stack.push(api);
+}
+document.addEventListener("click", e => {
+  const vid = e.target.closest("[data-video]"); if (vid) return openViewer(vid.dataset.video, true);
+  const img = e.target.closest(".av img, img.thumb, img.media"); if (!img || img.closest(".me,.topbar,label,.bnav,.viewer")) return;
+  openViewer(img.currentSrc || img.src);
+});
+if (CONFIG_MISSING) { showLogin(); }
+</script>
+</body>
+</html>
